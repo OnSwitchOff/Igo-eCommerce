@@ -1,30 +1,18 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import {Inject, Injectable, NotFoundException} from '@nestjs/common';
 import { User } from './users.entity';
-import { UsersRepository } from './users.repository';
+import {getUserRepository, UsersRepository} from './users.repository';
+import { DataSource} from "typeorm";
 
 @Injectable()
 export class UsersService {
-  private readonly usersRepository: UsersRepository;
-  constructor(private dataSource: DataSource) {
-    const repo = this.dataSource.getRepository(User).extend(UsersRepository.prototype);
-    console.log("rep",repo);
-    console.log("rep",repo.constructor.name);
-    console.log("rep",Object.getPrototypeOf(repo));
-    console.log("rep",Object.getOwnPropertyNames(Object.getPrototypeOf(repo)));
-    console.log("rep",Object.getOwnPropertyNames(UsersRepository.prototype));
-
-    this.usersRepository = repo;
-  }
+  constructor(@Inject() private usersRepository: UsersRepository) {}
 
   async createUser(name: string, email: string, password: string, age: number) {
     return this.usersRepository.createUser(name, email, password, age);
   }
 
   async findAll() {
-    const users = await this.usersRepository.find({ order: { createdAt: 'DESC' } });
-    console.log(users);
-    return users;
+    return  await this.usersRepository.findAllUsers();
   }
 
   async findById(id: string) {
