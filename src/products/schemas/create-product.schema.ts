@@ -1,10 +1,11 @@
 import {z} from "zod";
-import {createProductPriceSchema} from "./create-product-price.schema";
+import {CreateProductPriceSchema} from "./create-product-price.schema";
 
-export const createProductSchema = z.object({
+export const CreateProductSchema = z.object({
     name: z.string().min(1),
     displayedName: z.string().optional(),
-    prices: z.array(createProductPriceSchema).min(1),
+    prices: z.array(CreateProductPriceSchema).min(1),
 });
 
-export type CreateProductInput = z.infer<typeof createProductSchema>;
+export type CreateProductInput = z.infer<typeof CreateProductSchema>;
+

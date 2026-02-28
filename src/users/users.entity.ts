@@ -1,22 +1,29 @@
-import {Entity, Column, PrimaryGeneratedColumn, CreateDateColumn} from 'typeorm';
+import {Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany} from 'typeorm';
+import {Order} from "../orders/entities/order.entity";
 
 @Entity('users')
 export class User {
     @PrimaryGeneratedColumn('uuid')
-    id!: string; // UUID primary key
+    id: string;
 
     @Column()
-    age!: number;
+    age: number;
 
     @Column({ length: 100 })
-    name!: string;
+    name: string;
 
     @Column({ unique: true })
-    email!: string;
+    email: string;
 
     @Column()
-    password!: string;
+    password: string;
 
     @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
-    createdAt!: Date;
+    createdAt: Date;
+
+    @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
+    updatedAt: Date;
+
+    @OneToMany(() => Order, (order) => order.user)
+    orders: Order[];
 }

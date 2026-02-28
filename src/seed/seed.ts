@@ -68,7 +68,7 @@ export async function seedProducts (dataSource: DataSource) {
 
     const pricesToUpsert: Array<Partial<ProductPrice>> = [{
             type: PriceType.SALE,
-            amount: 1999,      // $19.99 in minor units
+            amount: 1999n,      // $19.99 in minor units
             currency: usd,
             validFrom: now,
             validTo: nextMonth,
@@ -77,7 +77,7 @@ export async function seedProducts (dataSource: DataSource) {
         },
         {
             type: PriceType.OFFER,
-            amount: 1499,      // $14.99 offer
+            amount: 1499n,      // $14.99 offer
             currency: usd,
             validFrom: now,
             validTo: nextMonth,

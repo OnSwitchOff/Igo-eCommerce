@@ -16,6 +16,7 @@ export class ProductPrice {
     id: string;
 
     @Column({ type: 'uuid', name: 'product_id' })
+    productId: string;
     @ManyToOne(() => Product, product => product.prices, {
         onDelete: "CASCADE",
     })
@@ -29,9 +30,10 @@ export class ProductPrice {
     type: PriceType;
 
     @Column({ type: "bigint" })
-    amount: number; // stored in minor units
+    amount: bigint; // stored in minor units
 
     @Column({ type: 'uuid', name: 'currency_id' })
+    currencyId: string;
     @ManyToOne(() => Currency)
     @JoinColumn({ name: 'currency_id' })
     currency: Currency;

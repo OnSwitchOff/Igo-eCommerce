@@ -1,10 +1,9 @@
-import {Injectable, NotFoundException} from '@nestjs/common';
+import {Injectable} from '@nestjs/common';
 import {Product} from '../entities/product.entity';
 import {InjectRepository} from "@nestjs/typeorm";
 import {DataSource, DeepPartial, Repository} from "typeorm";
 import {Currency} from "../entities/currency.entity";
 import {ProductPrice} from "../entities/product-price.entity";
-import {PriceType} from "../enums/price-type.enum";
 
 @Injectable()
 export class ProductsService  {
@@ -50,7 +49,7 @@ export class ProductsService  {
 
           const created = await productsRepository.findOne({
               where: { id: product.id },
-              relations: { prices: true },
+              relations: [ "prices", "prices.currency"],
           });
 
           if (!created) {
@@ -64,14 +63,14 @@ export class ProductsService  {
   async findAll(): Promise<Product[]> {
     return await this.productsRepository.find({
         order: {name: "ASC"},
-        relations: { prices: true}
+        relations: [ "prices", "prices.currency"]
     });
   }
 
   async findById(id: string): Promise<Product| null>  {
     return await this.productsRepository.findOne({
       where: { id },
-      relations: { prices: true}
+      relations: [ "prices", "prices.currency"]
     });
   }
 }

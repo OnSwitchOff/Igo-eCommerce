@@ -1,7 +1,7 @@
 import {PriceType} from "../enums/price-type.enum";
 import {z} from "zod";
 
-export const createProductPriceSchema = z.object({
+export const CreateProductPriceSchema = z.object({
     type: z.enum(PriceType),
     amount: z.number().int().nonnegative(),  // minor units
     currencyId: z.uuid(),
@@ -11,4 +11,4 @@ export const createProductPriceSchema = z.object({
 });
 
 
-export type CreateProductPriceInput = z.infer<typeof createProductPriceSchema>;
+export type CreateProductPriceInput = z.infer<typeof CreateProductPriceSchema>;

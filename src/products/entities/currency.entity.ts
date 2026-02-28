@@ -15,7 +15,7 @@ export class Currency {
     symbol: string;
 
     @Column()
-    precision: number; // 2 for USD, 0 for JPY
+    precision: number;
 
     @Column({ name: "is_default" })
     isDefault: boolean = false;
