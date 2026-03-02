@@ -1,4 +1,4 @@
-1. як реалізована транзакція:
+**1. Як реалізована транзакція:**
 
  Транзакція забеспучує атомарність операції (захист від  partial writes)
  
@@ -13,7 +13,8 @@
 [Orders Service](src/orders/orders.service.ts)
 [Product Service](src/products/services/products.service.ts)    
 
-2. який механізм конкурентності обрано:
+
+**2. Який механізм конкурентності обрано:**
 
 Обрано варіант 2 optimistic concurrency
 
@@ -24,7 +25,8 @@ atomic update з перевіркою версії,
 Приклад можна побачити у методі decrementStock
 [Orders Service](src/orders/orders.service.ts)
 
-3. як працює ідемпотентність:
+
+**3. Як працює ідемпотентність:**
 
 в схему створеня ордеру додано idempotencyKey
 [CreateOrderSchema](src/orders/schemas/create-order.schema.ts)
@@ -40,7 +42,7 @@ atomic update з перевіркою версії,
         return existing;
     }
  ```
-4. який запит оптимізували, та які індекси додали:
+**4. Який запит оптимізували, та які індекси додали:**
 
  ```sql
     EXPLAIN ANALYZE
@@ -195,12 +197,11 @@ atomic update з перевіркою версії,
 `EXPLAIN ANALYZE` виконує запит на реальних даних, які зараз є в базі, і показує реальний час та реальну кількість рядків.
 Тому складно покращити перфоменс при роботі з невеликою кількість данних.
 
+**5. Обробка помилок**
 
-5. Обробка помилок
+- не знайдено сутності:  ```throw new NotFoundException('User not found'); ```
+- недостатній stock:  ```throw new ConflictException(`Product ${product.id} is out of stock`); ```
+- duplicate idempotencyKey:  ```не викликає помилку (повертає існуючий заказ) ```
+- будь-яка інша помилка:  ```throw new Error('Order creation failed'); ```
 
-не знайдено сутності: throw new NotFoundException('User not found');
-недостатній stock: throw new ConflictException(`Product ${product.id} is out of stock`);
-duplicate idempotencyKey: не викликає помилку (повертає існуючий заказ)
-будь-яка інша помилка: throw new Error('Order creation failed');
-
-ймовірно ще треба додати BadRequestException і обробку помилок Zod валідації
+ймовірно ще треба додати  ```BadRequestException``` і обробку помилок ```Zod``` валідації
