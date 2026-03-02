@@ -1,4 +1,4 @@
-import {ConflictException, Injectable, NotFoundException} from "@nestjs/common";
+import {BadRequestException, ConflictException, Injectable, NotFoundException} from "@nestjs/common";
 import {DataSource, DeepPartial, QueryDeepPartialEntity, Repository} from "typeorm";
 import {InjectRepository} from "@nestjs/typeorm";
 import {OrderItem} from "./entities/order-item.enity";
@@ -42,6 +42,8 @@ export class OrdersService {
             if (!user) {
                 throw new NotFoundException('User not found');
             }
+
+
 
             const order: Order = ordersRepository.create({
                 idempotencyKey: validated.idempotencyKey,
@@ -106,11 +108,6 @@ export class OrdersService {
     private async decrementStock(product: Product, quantity: number, productsRepository: Repository<Product>) {
         for (let attempt = 0; attempt < 3; attempt++) {
             const currentVersion = product.version;
-            console.log({
-                id: product.id,
-                qty: quantity,
-                version: currentVersion
-            })
 
             const result = await productsRepository.createQueryBuilder()
                 .update(Product)
