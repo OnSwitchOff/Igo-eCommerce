@@ -8,11 +8,21 @@ import {ProductPrice} from "../products/entities/product-price.entity";
 import {PriceType} from "../products/enums/price-type.enum";
 
 async function seed() {
-    await AppDataSource.initialize();
-    await seedUsers(AppDataSource);
-    await seedCurrencies(AppDataSource);
-    await seedProducts(AppDataSource);
-    console.log("✅ Seeding complete!");
+
+    try {
+        await AppDataSource.initialize();
+        await seedUsers(AppDataSource);
+        await seedCurrencies(AppDataSource);
+        await seedProducts(AppDataSource);
+        await updateStockQuantity(AppDataSource)
+    }
+    catch (ex) {
+        console.log(ex);
+    }
+    finally {
+        await AppDataSource.destroy();
+    }
+
 }
 
 export async function seedUsers(dataSource: DataSource) {
@@ -24,7 +34,7 @@ export async function seedUsers(dataSource: DataSource) {
         { name: 'Charlie', email: 'charlie@example.com', password: await bcrypt.hash('password123', 10), age: 22 },
     ];
 
-    await userRepository.upsert(usersData,['id'])
+    await userRepository.upsert(usersData,['email'])
 
     console.log('✅ Users seeded!');
 }
@@ -38,7 +48,7 @@ export async function seedCurrencies(dataSource: DataSource)  {
         { code: "UAH", name: "Hryvnia", symbol: "₴", precision: 2, isDefault: false },
     ];
 
-    await currencyRepository.upsert(currenciesToUpsert,['id'])
+    await currencyRepository.upsert(currenciesToUpsert,['code'])
 
     console.log("✅ Currencies seeded");
 }
@@ -54,7 +64,12 @@ export async function seedProducts (dataSource: DataSource) {
     const eur = await currencyRepository.findOne({ where: { code: "EUR" } });
     if (!usd || !eur) throw new Error("Currencies must be seeded first");
 
-    // Example Product
+    const existing = await productRepository.findOne({
+        where: { name: "T-Shirt" },
+    });
+
+    if (existing) return existing;
+
     const productToUpsert: Partial<Product> = {
         name: "T-Shirt",
         displayedName: "T-Shirt Premium"
@@ -87,6 +102,16 @@ export async function seedProducts (dataSource: DataSource) {
     ];
     await priceRepository.upsert(pricesToUpsert, ['id']);
     console.log("✅ Products seeded");
+}
+
+export async function updateStockQuantity (dataSource: DataSource) {
+    const productRepository = dataSource.getRepository(Product);
+    const quantity = 100;
+    await productRepository.createQueryBuilder()
+        .update()
+        .set({ stock: quantity })
+        .execute();
+    console.log("✅ Products stocks updated");
 }
 
 seed().catch((err) => {

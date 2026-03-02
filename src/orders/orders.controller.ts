@@ -19,6 +19,7 @@ export class OrdersController {
     async createOrder(@Body() body: any): Promise<OrderResponse> {
         const validated: CreateOrderInput = CreateOrderSchema.parse(body);
         const order = await this.ordersService.create(validated);
+        console.log(order);
         return toOrderResponse(order);
     }
 

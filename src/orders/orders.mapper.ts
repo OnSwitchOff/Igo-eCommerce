@@ -6,6 +6,7 @@ export function toOrderResponse(order: Order): OrderResponse {
         id: order.id,
         idempotencyKey: order.idempotencyKey,
         status: order.status,
+        createdAt: order.createdAt,
         items: order.items.map(i => ({
             id: i.id,
             title: i.product.name,

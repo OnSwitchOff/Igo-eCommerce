@@ -1,13 +1,14 @@
-import {Injectable} from "@nestjs/common";
-import {DataSource, DeepPartial, Repository} from "typeorm";
+import {ConflictException, Injectable, NotFoundException} from "@nestjs/common";
+import {DataSource, DeepPartial, QueryDeepPartialEntity, Repository} from "typeorm";
 import {InjectRepository} from "@nestjs/typeorm";
-import {Currency} from "../products/entities/currency.entity";
 import {OrderItem} from "./entities/order-item.enity";
 import {Order} from "./entities/order.entity";
 import {ProductPrice} from "../products/entities/product-price.entity";
 import {User} from "../users/users.entity";
 import {OrderStatus} from "./enums/order-status.enum";
 import {Product} from "../products/entities/product.entity";
+import {CreateOrderInput} from "./schemas/create-order.schema";
+import {compare} from "bcrypt";
 
 @Injectable()
 export class OrdersService {
@@ -19,10 +20,10 @@ export class OrdersService {
         private readonly itemsRepository: Repository<OrderItem>,
     ) {}
 
-    async create(validated) {
+    async create(validated: CreateOrderInput) {
         const existing = await this.ordersRepository.findOne({
             where: { idempotencyKey: validated.idempotencyKey },
-            relations: { items: true }
+            relations: [ 'user', 'items', 'items.product', 'items.currency'],
         });
 
         if (existing) {
@@ -39,7 +40,7 @@ export class OrdersService {
 
             const user = await usersRepository.findOne({ where: { id: validated.userId } });
             if (!user) {
-                throw new Error('User not found');
+                throw new NotFoundException('User not found');
             }
 
             const order: Order = ordersRepository.create({
@@ -50,48 +51,95 @@ export class OrdersService {
             });
             await ordersRepository.save(order);
 
-            const orderItems: DeepPartial<OrderItem>[] = validated.prices.map(async (item) => {
+            const orderItems: Promise<QueryDeepPartialEntity<OrderItem>>[]  = validated.items.map(async (item) => {
                 const product: Product | null = await productsRepository.findOne({ where: { id: item.productId.toString() } });
                 if (!product) {
-                    throw new Error('product not found');
+                    throw new NotFoundException('product not found');
                 }
+
+                if (product.stock < item.quantity) {
+                    throw new ConflictException(`Product ${product.id} is out of stock`);
+                }
+
+                await this.decrementStock(product, item.quantity, productsRepository);
+
                 const priceId= item.priceId.toString();
-                const currencyId = item.currencyId.toString();
                 const price = await pricesRepository.findOne({
                     relations: ['currency'],
                     where: { id: priceId }
                 });
 
-                console.log("price", price);
-
                 if (!price) {
-                    throw new Error('price not found');
+                    throw new NotFoundException('price not found');
                 }
-                return {
+
+                const result: QueryDeepPartialEntity<OrderItem> = {
                     order: order,
                     orderId: order.id,
-                    currency: price.currency,
-                    currencyId: price.currency.id,
                     product: product,
                     productId: product.id,
-                    price: price,
+                    currency: price.currency,
+                    currencyId: price.currency.id,
+                    price: price.amount,
                     quantity: item.quantity
                 }
+
+                return result;
             });
+
             await itemsRepository.upsert(await Promise.all(orderItems), ['id']);
 
             const created = await ordersRepository.findOne({
                 where: { id: order.id },
-                relations: { items: true },
+                relations: [ 'user', 'items', 'items.product', 'items.currency'],
             });
 
             if (!created) {
-                throw new Error('Product creation failed');
+                throw new Error('Order creation failed');
             }
 
+            console.log(created);
             return created;
         });
     }
+
+    private async decrementStock(product: Product, quantity: number, productsRepository: Repository<Product>) {
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const currentVersion = product.version;
+            console.log({
+                id: product.id,
+                qty: quantity,
+                version: currentVersion
+            })
+
+            const result = await productsRepository.createQueryBuilder()
+                .update(Product)
+                .set({ stock: () => `stock - ${quantity}`, version: product.version + 1 })
+                .where("id = :id AND stock >= :qty AND version = :version", {
+                    id: product.id,
+                    qty: quantity,
+                    version: currentVersion
+                })
+                .returning(['id', 'stock', 'version'])
+                .execute();
+
+            if (result.affected && result.affected > 0) {
+                product.stock = result.raw[0].stock;
+                product.version = result.raw[0].version;
+                return;
+            }
+
+            const freshProduct = await productsRepository.findOne({ where: { id: product.id } });
+            if (!freshProduct || freshProduct.stock < quantity) {
+                throw new ConflictException(`Product(${product.id}) is out of stock`);
+            }
+
+            product = freshProduct;
+        }
+
+        throw new ConflictException(`Could not update product(${product.id}) stock  is out of stock`);
+    }
+
 
     async findAll(): Promise<Order[]> {
         return await this.ordersRepository.find({

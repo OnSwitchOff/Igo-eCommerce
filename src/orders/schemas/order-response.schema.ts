@@ -6,6 +6,7 @@ export const OrderResponseSchema = z.object({
     id: z.uuid(),
     idempotencyKey: z.uuid(),
     status: z.enum(OrderStatus),
+    createdAt: z.date(),
     items: z.array(
         z.object({
             id: z.uuid(),

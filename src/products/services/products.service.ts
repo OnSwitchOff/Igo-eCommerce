@@ -1,4 +1,4 @@
-import {Injectable} from '@nestjs/common';
+import {Injectable, NotFoundException} from '@nestjs/common';
 import {Product} from '../entities/product.entity';
 import {InjectRepository} from "@nestjs/typeorm";
 import {DataSource, DeepPartial, Repository} from "typeorm";
@@ -26,14 +26,15 @@ export class ProductsService  {
 
           const product: Product = productsRepository.create({
               name: validated.name,
-              displayedName: validated.displayedName
+              displayedName: validated.displayedName,
+              stock: validated.quantity,
           });
           await productsRepository.save(product);
 
           const productPrices: DeepPartial<ProductPrice>[] = validated.prices.map(async (price) => {
               const currency: Currency | null = await currenciesRepository.findOne({ where: { id: price.currencyId.toString() } });
               if (!currency) {
-                  throw new Error('currency not found');
+                  throw new NotFoundException('currency not found');
               }
               return {
                   type: price.type,

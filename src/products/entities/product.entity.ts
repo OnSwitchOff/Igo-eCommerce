@@ -2,7 +2,7 @@ import {
     Entity,
     Column,
     PrimaryGeneratedColumn,
-    OneToMany, CreateDateColumn, UpdateDateColumn,
+    OneToMany, CreateDateColumn, UpdateDateColumn, VersionColumn, Index,
 } from "typeorm";
 import { ProductPrice } from "./product-price.entity";
 import {OrderItem} from "../../orders/entities/order-item.enity";
@@ -29,4 +29,10 @@ export class Product {
 
     @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
     updatedAt: Date;
+
+    @Column({ nullable: false, default:0 })
+    stock: number;
+
+    @VersionColumn({ nullable: false, default:1 })
+    version: number;
 }

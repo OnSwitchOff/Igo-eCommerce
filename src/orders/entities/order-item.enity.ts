@@ -1,8 +1,10 @@
-import {Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from "typeorm";
+import {Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from "typeorm";
 import {Product} from "../../products/entities/product.entity";
 import {Order} from "./order.entity";
 import {Currency} from "../../products/entities/currency.entity";
 
+@Index('IDX_order_items_order_id', ['orderId'])
+@Index('IDX_order_items_product_id', ['productId'])
 @Entity('order_items')
 export class OrderItem {
     @PrimaryGeneratedColumn('uuid')
