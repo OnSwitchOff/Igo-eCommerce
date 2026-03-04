@@ -1,4 +1,10 @@
-import {BadRequestException, ConflictException, Injectable, NotFoundException} from "@nestjs/common";
+import {
+    BadRequestException,
+    ConflictException,
+    Injectable,
+    InternalServerErrorException,
+    NotFoundException
+} from "@nestjs/common";
 import {DataSource, DeepPartial, QueryDeepPartialEntity, Repository} from "typeorm";
 import {InjectRepository} from "@nestjs/typeorm";
 import {OrderItem} from "./entities/order-item.enity";
@@ -9,6 +15,7 @@ import {OrderStatus} from "./enums/order-status.enum";
 import {Product} from "../products/entities/product.entity";
 import {CreateOrderInput} from "./schemas/create-order.schema";
 import {compare} from "bcrypt";
+import {UNHANDLED_RUNTIME_EXCEPTION} from "@nestjs/core/errors/messages";
 
 @Injectable()
 export class OrdersService {
@@ -27,6 +34,7 @@ export class OrdersService {
         });
 
         if (existing) {
+            console.log("existing",existing);
             return existing;
         }
 
@@ -43,15 +51,27 @@ export class OrdersService {
                 throw new NotFoundException('User not found');
             }
 
+            await ordersRepository
+                .createQueryBuilder()
+                .insert()
+                .into(Order)
+                .values({
+                    idempotencyKey: validated.idempotencyKey,
+                    userId: user.id,
+                    status: OrderStatus.CREATED
+                })
+                .orIgnore()
+                .execute();
 
-
-            const order: Order = ordersRepository.create({
-                idempotencyKey: validated.idempotencyKey,
-                userId: user.id,
-                user: user,
-                status: OrderStatus.CREATED
+            const order = await ordersRepository.findOne({
+                where: { idempotencyKey: validated.idempotencyKey }
             });
-            await ordersRepository.save(order);
+
+            if (!order) {
+                throw new InternalServerErrorException(
+                    'Order creation failed unexpectedly'
+                );
+            }
 
             const orderItems: Promise<QueryDeepPartialEntity<OrderItem>>[]  = validated.items.map(async (item) => {
                 const product: Product | null = await productsRepository.findOne({ where: { id: item.productId.toString() } });
@@ -141,14 +161,14 @@ export class OrdersService {
     async findAll(): Promise<Order[]> {
         return await this.ordersRepository.find({
             order: { createdAt: "DESC" },
-            relations: { items: true}
+            relations: [ 'user', 'items', 'items.product', 'items.currency'],
         });
     }
 
     async findById(id: string): Promise<Order| null>  {
         return await this.ordersRepository.findOne({
             where: { id },
-            relations: { items: true}
+            relations: [ 'user', 'items', 'items.product', 'items.currency'],
         });
     }
 }

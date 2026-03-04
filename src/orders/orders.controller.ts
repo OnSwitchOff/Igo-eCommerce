@@ -12,15 +12,23 @@ export class OrdersController {
     @Get()
     async getAll(): Promise<OrderResponse[]> {
         const orders = await this.ordersService.findAll();
+        console.log(orders);
         return orders.map(o => toOrderResponse(o));
     }
 
     @Post()
     async createOrder(@Body() body: any): Promise<OrderResponse> {
         const validated: CreateOrderInput = CreateOrderSchema.parse(body);
-        const order = await this.ordersService.create(validated);
-        console.log(order);
-        return toOrderResponse(order);
+
+        try {
+            const order = await this.ordersService.create(validated);
+            console.log(order);
+            return toOrderResponse(order);
+        }
+        catch (ex) {
+            console.log(ex);
+            throw ex;
+        }
     }
 
     @Get(':id')

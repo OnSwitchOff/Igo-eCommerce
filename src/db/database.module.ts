@@ -21,7 +21,7 @@ import {Order} from "../orders/entities/order.entity";
             migrations: ['dist/migrations/*.js'],
             migrationsRun: true,        // run migrations automatically
         }),
-        TypeOrmModule.forFeature([User, Product, Currency, ProductPrice]),
+        TypeOrmModule.forFeature([Order, OrderItem, Product, Currency, ProductPrice, User]),
     ],
 })
 

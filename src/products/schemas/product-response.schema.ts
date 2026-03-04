@@ -4,6 +4,7 @@ export const ProductResponseSchema = z.object({
     id: z.uuid(),
     name: z.string(),
     displayedName: z.string(),
+    stock: z.number(),
     prices: z.array(
         z.object({
             id: z.uuid(),

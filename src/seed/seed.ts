@@ -7,14 +7,10 @@ import {Product} from "../products/entities/product.entity";
 import {ProductPrice} from "../products/entities/product-price.entity";
 import {PriceType} from "../products/enums/price-type.enum";
 
-async function seed() {
-
+export async function seed() {
     try {
         await AppDataSource.initialize();
-        await seedUsers(AppDataSource);
-        await seedCurrencies(AppDataSource);
-        await seedProducts(AppDataSource);
-        await updateStockQuantity(AppDataSource)
+        await seedDemoData(AppDataSource);
     }
     catch (ex) {
         console.log(ex);
@@ -22,7 +18,13 @@ async function seed() {
     finally {
         await AppDataSource.destroy();
     }
+}
 
+export async function seedDemoData(dataSource: DataSource){
+    await seedUsers(dataSource);
+    await seedCurrencies(dataSource);
+    await seedProducts(dataSource);
+    await updateStockQuantity(dataSource);
 }
 
 export async function seedUsers(dataSource: DataSource) {

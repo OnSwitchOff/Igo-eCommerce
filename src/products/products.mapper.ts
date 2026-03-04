@@ -9,6 +9,7 @@ export function toProductResponse(product: Product): ProductResponse {
         id: product.id,
         name: product.name,
         displayedName: product.displayedName,
+        stock: product.stock,
         prices: product.prices.map(p => ({
             id: p.id,
             type: p.type,
