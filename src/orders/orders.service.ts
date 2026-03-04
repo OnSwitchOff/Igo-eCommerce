@@ -64,13 +64,18 @@ export class OrdersService {
                 .execute();
 
             const order = await ordersRepository.findOne({
-                where: { idempotencyKey: validated.idempotencyKey }
+                where: { idempotencyKey: validated.idempotencyKey },
+                relations: [ 'user', 'items', 'items.product', 'items.currency'],
             });
 
             if (!order) {
                 throw new InternalServerErrorException(
                     'Order creation failed unexpectedly'
                 );
+            }
+
+            if(order.items!.length > 0) {
+                return order;
             }
 
             const orderItems: Promise<QueryDeepPartialEntity<OrderItem>>[]  = validated.items.map(async (item) => {

@@ -75,8 +75,11 @@ describe('Orders Idempotency (e2e)', () => {
     // ✅ повертається один і той самий order
     expect(res1.body.id).toBeDefined();
     expect(res2.body.id).toBeDefined();
-
     expect(res1.body.id).toEqual(res2.body.id);
+
+    expect(res1.body.items).toBeDefined();
+    expect(res2.body.items).toBeDefined();
+    expect(res1.body.items.length).toEqual(res2.body.items.length);
 
     // ✅ у БД тільки один запис
     const count = await dataSource.getRepository(Order).count({
