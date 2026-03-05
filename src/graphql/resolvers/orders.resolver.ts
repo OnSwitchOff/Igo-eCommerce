@@ -1,48 +1,58 @@
-import {Context, Parent, Query, ResolveField, Resolver} from "@nestjs/graphql";
-import {Order} from "../../orders/entities/order.entity";
-import {InjectRepository} from "@nestjs/typeorm";
-import {Repository} from "typeorm";
-import {User} from "../../users/users.entity";
+import {Args, Context, ID, Parent, Query, ResolveField, Resolver} from "@nestjs/graphql";
 import {GraphQLContext} from "../loaders/loaders.types";
+import {OrdersGqlService} from "../services/orders-gql.service";
+import {OrderType} from "../dto/order.type";
+import {Order} from "../../orders/entities/order.entity";
+import {OrdersFilterInput} from "../dto/orders.args";
+import {UserType} from "../dto/user.type";
+import {User} from "../../users/users.entity";
+import {OrderItemType} from "../dto/order-item.type";
+import {OrderItem} from "../../orders/entities/order-item.enity";
+import {toProductType} from "../mappers/product.mapper";
+import {toOrderItemType} from "../mappers/order-item.mapper";
+import {toOrderType} from "../mappers/order.mapper";
 
-@Resolver(() => Order)
+@Resolver(() => OrderType)
 export class OrdersResolver {
-    constructor(
-        @InjectRepository(Order)
-        private readonly ordersRepository: Repository<Order>,
-        @InjectRepository(User)
-        private readonly usersRepository: Repository<User>
-    ) {}
+    constructor(private readonly ordersService: OrdersGqlService) {}
 
-    @Query(() => [Order])
-    async orders(@Context() ctx: GraphQLContext): Promise<Order[]> {
-        ctx.strategy = 'optimized';
-
-        return this.ordersRepository.find({
-            relations: { items: true },
-            order: { createdAt: 'DESC' }
-        });
+    @Query(() => [OrderType])
+    async orders(@Args() args: OrdersFilterInput): Promise<OrderType[]> {
+        const entities= await this.ordersService.listOrders(args);
+        if (!entities) {
+            return [];
+        }
+        return  entities.map(entity => { return toOrderType(entity);});
     }
 
-    @Query(() => [Order])
-    async ordersNaive(@Context() ctx: GraphQLContext): Promise<Order[]> {
-        ctx.strategy = 'naive';
-
-        return this.ordersRepository.find({
-            relations: { items: true },
-            order: { createdAt: 'DESC' }
-        });
+    @Query(() => OrderType, { nullable: true })
+    async order(@Args('id', { type: () => ID }) id: string): Promise<OrderType | null> {
+        const entity = await this.ordersService.getOrderById(id);
+        if (!entity) {
+            return null;
+        }
+        return toOrderType(entity);
     }
 
-    @ResolveField(() => User, { nullable: true })
+    @ResolveField(() => UserType, { nullable: true })
     async customer(
-        @Parent() order: Order,
+        @Parent() order: OrderType,
         @Context() ctx: GraphQLContext
     ): Promise<User | null> {
-        if (ctx.strategy === 'naive') {
-            return this.usersRepository.findOne({ where: { id: order.userId } });
-        }
+        return ctx.loaders.userByIdLoader.load(order.customerId);
+    }
 
-        return ctx.loaders.userByIdLoader.load(order.userId);
+    @ResolveField(() => [OrderItemType])
+    async items(@Parent() order: OrderType, @Context() ctx: GraphQLContext): Promise<OrderItemType[]> {
+        const entities= await ctx.loaders.orderItemsByOrderIdLoader.load(order.id);
+        if (!entities) {
+            return [];
+        }
+        return  entities.map(entity => { return toOrderItemType(entity);});
+    }
+
+    @ResolveField(() => String)
+    async total(@Parent() order: OrderType, @Context() ctx: GraphQLContext): Promise<string> {
+        return ctx.loaders.orderTotalByOrderIdLoader.load(order.id);
     }
 }

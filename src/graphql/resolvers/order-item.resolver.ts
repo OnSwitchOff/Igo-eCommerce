@@ -1,26 +1,22 @@
 import { Resolver, ResolveField, Parent, Context } from '@nestjs/graphql';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { GraphQLContext } from '../loaders/loaders.types';
 import {OrderItem} from "../../orders/entities/order-item.enity";
 import {Product} from "../../products/entities/product.entity";
+import {ProductType} from "../dto/product.type";
+import {OrderItemType} from "../dto/order-item.type";
+import {toProductType} from "../mappers/product.mapper";
 
-@Resolver(() => OrderItem)
+@Resolver(() => OrderItemType)
 export class OrderItemResolver {
-    constructor(
-        @InjectRepository(Product)
-        private readonly productsRepository: Repository<Product>
-    ) {}
-
-    @ResolveField(() => Product, { nullable: true })
+    @ResolveField(() => ProductType, { nullable: true })
     async product(
-        @Parent() orderItem: OrderItem,
+        @Parent() orderItem: OrderItemType,
         @Context() ctx: GraphQLContext
-    ): Promise<Product | null> {
-        if (ctx.strategy === 'naive') {
-            return this.productsRepository.findOne({ where: { id: orderItem.productId } });
+    ): Promise<ProductType | null> {
+        const entity = await ctx.loaders.productByIdLoader.load(orderItem.productId);
+        if (!entity) {
+            return null;
         }
-
-        return ctx.loaders.productByIdLoader.load(orderItem.productId);
+        return toProductType(entity, orderItem.priceAtPurchase);
     }
 }

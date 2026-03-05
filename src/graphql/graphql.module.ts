@@ -10,6 +10,10 @@ import {GraphQLModule} from "@nestjs/graphql";
 import {ApolloDriver, ApolloDriverConfig} from "@nestjs/apollo";
 import {LoadersModule} from "./loaders/loaders.module";
 import {LoadersFactory} from "./loaders/loaders.factory";
+import {OrdersResolver} from "./resolvers/orders.resolver";
+import {OrderItemResolver} from "./resolvers/order-item.resolver";
+import {OrdersGqlService} from "./services/orders-gql.service";
+import {TestResolver} from "./resolvers/test.resolver";
 
 @Module({
     imports: [
@@ -30,6 +34,6 @@ import {LoadersFactory} from "./loaders/loaders.factory";
             })
         })
     ],
-    providers: [OrdersResolver, OrderItemResolver]
+    providers: [TestResolver, OrdersResolver, OrderItemResolver, OrdersGqlService]
 })
 export class AppGraphqlModule {}
