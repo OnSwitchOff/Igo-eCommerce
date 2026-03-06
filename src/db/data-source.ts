@@ -6,6 +6,7 @@ import {Currency} from "../products/entities/currency.entity";
 import {ProductPrice} from "../products/entities/product-price.entity";
 import {Order} from "../orders/entities/order.entity";
 import {OrderItem} from "../orders/entities/order-item.enity";
+import {queryLogger} from "./query-counter.logger";
 
 export const AppDataSource = new DataSource({
     type: 'postgres',
@@ -17,4 +18,5 @@ export const AppDataSource = new DataSource({
     entities: [User, Product, Currency, ProductPrice, Order, OrderItem],
     migrations: ['src/migrations/*.ts'],  // CLI uses TS, runtime uses JS
     synchronize: false,
+    logger: queryLogger
 });

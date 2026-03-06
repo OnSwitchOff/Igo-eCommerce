@@ -6,6 +6,7 @@ import {Currency} from "../products/entities/currency.entity";
 import {ProductPrice} from "../products/entities/product-price.entity";
 import {OrderItem} from "../orders/entities/order-item.enity";
 import {Order} from "../orders/entities/order.entity";
+import {queryLogger} from "./query-counter.logger";
 
 @Module({
     imports: [
@@ -20,6 +21,8 @@ import {Order} from "../orders/entities/order.entity";
             synchronize: false,         // never true in production!
             migrations: ['dist/migrations/*.js'],
             migrationsRun: true,        // run migrations automatically
+            logging: true,
+            logger: queryLogger
         }),
         TypeOrmModule.forFeature([Order, OrderItem, Product, Currency, ProductPrice, User]),
     ],
