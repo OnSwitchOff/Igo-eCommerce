@@ -31,7 +31,6 @@ export class LoadersFactory {
                 if (ids.length === 0) {
                     return [];
                 }
-
                 const products = await this.productsRepository.find({
                     where: { id: In([...ids]) }
                 });

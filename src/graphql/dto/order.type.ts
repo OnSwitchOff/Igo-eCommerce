@@ -27,3 +27,5 @@ export class OrderType {
     @Field(type=>[OrderItemType], {nullable: "itemsAndList"})
     items?: OrderItemType[];
 }
+
+

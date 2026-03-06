@@ -11,18 +11,19 @@ import {OrderItem} from "../../orders/entities/order-item.enity";
 import {toProductType} from "../mappers/product.mapper";
 import {toOrderItemType} from "../mappers/order-item.mapper";
 import {toOrderType} from "../mappers/order.mapper";
+import {BadRequestException, UseFilters} from "@nestjs/common";
+import {GraphQLExceptionFilter} from "../gql.exception-filter";
+import {OrdersConnection} from "../dto/orders-connection";
 
 @Resolver(() => OrderType)
 export class OrdersResolver {
     constructor(private readonly ordersService: OrdersGqlService) {}
 
-    @Query(() => [OrderType])
-    async orders(@Args() args: OrdersFilterInput): Promise<OrderType[]> {
-        const entities= await this.ordersService.listOrders(args);
-        if (!entities) {
-            return [];
-        }
-        return  entities.map(entity => { return toOrderType(entity);});
+    @Query(() => OrdersConnection)
+    @UseFilters(GraphQLExceptionFilter)
+    async orders(@Args() args: OrdersFilterInput): Promise<OrdersConnection> {
+        //throw new BadRequestException("Test bad input exception");
+        return  await this.ordersService.listOrders(args);
     }
 
     @Query(() => OrderType, { nullable: true })
@@ -44,10 +45,13 @@ export class OrdersResolver {
 
     @ResolveField(() => [OrderItemType])
     async items(@Parent() order: OrderType, @Context() ctx: GraphQLContext): Promise<OrderItemType[]> {
-        const entities= await ctx.loaders.orderItemsByOrderIdLoader.load(order.id);
-        if (!entities) {
-            return [];
-        }
+
+        const entities: OrderItem[] = await this.ordersService.getOrderItemsByOrderId(order.id) ?? [];
+
+        // const entities= await ctx.loaders.orderItemsByOrderIdLoader.load(order.id);
+        // if (!entities) {
+        //     return [];
+        // }
         return  entities.map(entity => { return toOrderItemType(entity);});
     }
 
