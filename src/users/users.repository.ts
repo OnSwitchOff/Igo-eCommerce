@@ -23,7 +23,7 @@ export class UsersRepository {
         age: number,
     ): Promise<User> {
         const hashedPassword = await bcrypt.hash(password, 10);
-        const user = this.repository.create({ name, email, password: hashedPassword, age });
+        const user = this.repository.create({ name, email, passwordHash: hashedPassword, age });
         return this.repository.save(user);
     }
     async findAllUsers(): Promise<User[]> {
@@ -51,13 +51,13 @@ export class UsersRepository {
     async updatePassword(id: string, newPassword: string): Promise<User | null> {
         const user = await this.findById(id);
         if (!user) return null;
-        user.password = await bcrypt.hash(newPassword, 10);
+        user.passwordHash = await bcrypt.hash(newPassword, 10);
         return this.repository.save(user);
     }
     async validatePassword(email: string, password: string): Promise<boolean> {
         const user = await this.findByEmail(email);
         if (!user) return false;
-        return bcrypt.compare(password, user.password);
+        return bcrypt.compare(password, user.passwordHash!);
     }
     async findOlderThan(age: number): Promise<User[]> {
         return this.repository.createQueryBuilder('user')
@@ -78,7 +78,7 @@ export const getUserRepository = (dataSource: DataSource) =>
             age: number,
         ): Promise<User> {
             const hashedPassword = await bcrypt.hash(password, 10);
-            const user = this.create({ name, email, password: hashedPassword, age });
+            const user = this.create({ name, email, passwordHash: hashedPassword, age });
             return this.save(user);
         },
         async findAllUsers(): Promise<User[]> {
@@ -106,13 +106,13 @@ export const getUserRepository = (dataSource: DataSource) =>
         async updatePassword(id: string, newPassword: string): Promise<User | null> {
             const user = await this.findById(id);
             if (!user) return null;
-            user.password = await bcrypt.hash(newPassword, 10);
+            user.passwordHash = await bcrypt.hash(newPassword, 10);
             return this.save(user);
         },
         async validatePassword(email: string, password: string): Promise<boolean> {
             const user = await this.findByEmail(email);
             if (!user) return false;
-            return bcrypt.compare(password, user.password);
+            return bcrypt.compare(password, user.passwordHash!);
         },
         async findOlderThan(age: number): Promise<User[]> {
             return this.createQueryBuilder('user')

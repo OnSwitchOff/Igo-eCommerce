@@ -30,10 +30,17 @@ export async function seedDemoData(dataSource: DataSource){
 export async function seedUsers(dataSource: DataSource) {
     const userRepository = dataSource.getRepository(User);
 
+    const passwordHash = await bcrypt.hash('password123', 10);
     const usersData: Partial<User>[] = [
-        { name: 'Alice', email: 'alice@example.com', password: await bcrypt.hash('password123', 10) , age: 25 },
-        { name: 'Bob', email: 'bob@example.com', password: await bcrypt.hash('password123', 10), age: 30 },
-        { name: 'Charlie', email: 'charlie@example.com', password: await bcrypt.hash('password123', 10), age: 22 },
+        { name: 'Alice', email: 'alice@example.com', passwordHash: passwordHash, age: 25,
+            roles: ['user'],
+            scopes: ['orders:read', 'orders:write'] },
+        { name: 'Bob', email: 'bob@example.com',  passwordHash: passwordHash, age: 30,
+            roles: ['support'],
+            scopes: ['orders:read', 'payments:read', 'payments:write'] },
+        { name: 'Charlie', email: 'admin@example.com',  passwordHash: passwordHash, age: 22,
+            roles: ['admin'],
+            scopes: ['orders:read', 'orders:write', 'payments:read', 'payments:write', 'refunds:write'] },
     ];
 
     await userRepository.upsert(usersData,['email'])

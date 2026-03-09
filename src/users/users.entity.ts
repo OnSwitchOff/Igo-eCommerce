@@ -15,8 +15,14 @@ export class User {
     @Column({ unique: true })
     email: string;
 
-    @Column()
-    password: string;
+    @Column({
+        type: 'varchar',
+        length: 255,
+        name: 'password_hash',
+        nullable: true,
+        select: false
+    })
+    passwordHash?: string | null;
 
     @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
     createdAt: Date;
@@ -26,4 +32,19 @@ export class User {
 
     @OneToMany(() => Order, (order) => order.user)
     orders: Order[];
+
+    @Column({
+        type: 'text',
+        array: true,
+        default: () => 'ARRAY[]::text[]'
+    })
+    roles: string[];
+
+    @Column({
+        type: 'text',
+        array: true,
+        default: () => 'ARRAY[]::text[]'
+    })
+    scopes: string[];
+
 }

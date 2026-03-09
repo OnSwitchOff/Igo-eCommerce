@@ -1,12 +1,18 @@
-import { Controller, Get, Post, Body, Param, NotFoundException  } from '@nestjs/common';
+import {Controller, Get, Post, Body, Param, NotFoundException, UseGuards} from '@nestjs/common';
 import { UsersService } from './users.service';
 import {CreateUserInput, createUserSchema} from "./schemas/create-user.schema";
 import {toUserResponse} from "./users.mapper";
+import {JwtAuthGuard} from "../auth/jwt.guard";
+import {RolesGuard} from "../auth/roles.guard";
+import {Roles} from "../auth/roles.decorator";
+
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   @Get()
   async getAll(){
     const users = await this.usersService.findAll();
