@@ -31,13 +31,14 @@ export class FilesService {
 
     async createPresignedUpload(user: AuthUser, dto: PresignFileDto) {
         console.log("validateUploadInput");
+        console.log("user",user);
         this.validateUploadInput(dto);
 
-        const objectKey = this.buildObjectKey(dto.kind, user.sub, dto.contentType);
+        const objectKey = this.buildObjectKey(dto.kind, user.userId, dto.contentType);
 
 
         const file = this.filesRepository.create({
-            ownerUserId: user.sub,
+            ownerUserId: user.userId,
             objectKey,
             bucket: this.s3Service.getBucketName(),
             contentType: dto.contentType,
@@ -115,7 +116,7 @@ export class FilesService {
             throw new BadRequestException('File upload is not completed');
         }
 
-        if (file.ownerUserId === user.sub) {
+        if (file.ownerUserId === user.userId) {
             return file;
         }
 
@@ -164,7 +165,7 @@ export class FilesService {
     }
 
     private assertOwnerOrStaff(file: FileRecord, user: AuthUser): void {
-        const isOwner = file.ownerUserId === user.sub;
+        const isOwner = file.ownerUserId === user.userId;
         const isStaff = user.roles.includes('admin') || user.roles.includes('support');
 
         if (!isOwner && !isStaff) {
