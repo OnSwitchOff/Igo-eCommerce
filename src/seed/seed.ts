@@ -9,6 +9,7 @@ import { PriceType } from '../products/enums/price-type.enum';
 import { Order } from '../orders/entities/order.entity';
 import { OrderStatus } from '../orders/enums/order-status.enum';
 import { OrderItem } from '../orders/entities/order-item.enity';
+import {FileRecord} from "../files/file-record.entity";
 
 export async function seed() {
   try {
@@ -27,6 +28,7 @@ export async function seedDemoData(dataSource: DataSource) {
   await seedProducts(dataSource);
   await updateStockQuantity(dataSource);
   await seedOrders(dataSource);
+  await checkFilesTable(dataSource);
 }
 
 export async function seedUsers(dataSource: DataSource) {
@@ -212,6 +214,20 @@ export async function seedOrders(dataSource: DataSource) {
   ];
   await itemsRepository.upsert(itemsToUpsert, ['id']);
   console.log('✅ Order seeded');
+}
+
+export async function checkFilesTable(dataSource: DataSource) {
+  const queryRunner = dataSource.createQueryRunner();
+
+  const exists = await queryRunner.hasTable("files"); // table name
+
+  if (exists) {
+    console.log("✅ files table exists");
+  } else {
+    console.log("❌ files table does NOT exist");
+  }
+
+  await queryRunner.release();
 }
 
 seed().catch((err) => {

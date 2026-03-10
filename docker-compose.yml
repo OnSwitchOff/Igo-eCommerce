@@ -27,6 +27,8 @@ services:
       sh -c "
       echo 'Waiting for DB...';
       until pg_isready -h db -p 5432 -U postgres; do sleep 1; done;
+      echo 'DB is ready, applying migrations...';
+      npm run migrations:apply;
       echo 'DB is ready, running seed...';
       npm run seed;
       echo 'Starting NestJS server...';
