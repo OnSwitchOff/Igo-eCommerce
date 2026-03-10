@@ -7,6 +7,7 @@ import { Product } from '../products/entities/product.entity';
 import { Currency } from '../products/entities/currency.entity';
 import { ProductPrice } from '../products/entities/product-price.entity';
 import { User } from '../users/users.entity';
+import {FileRecord} from "../files/file-record.entity";
 
 config({ path: `./${envFilePath}` });
 
@@ -17,7 +18,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  entities: [Order, OrderItem, Product, Currency, ProductPrice, User],
+  entities: [Order, OrderItem, Product, Currency, ProductPrice, User, FileRecord],
   migrations: ['src/migrations/*{.ts,.js}'],
   synchronize: false,
 });

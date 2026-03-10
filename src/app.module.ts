@@ -8,6 +8,7 @@ import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { AppGraphqlModule } from './graphql/graphql.module';
 import { AuthModule } from './auth/auth.module';
+import {FilesModule} from "./files/files.module";
 
 export const envFilePath = (() => {
   switch (process.env.NODE_ENV) {
@@ -34,6 +35,7 @@ export const envFilePath = (() => {
     OrdersModule,
     AppGraphqlModule,
     AuthModule,
+    FilesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

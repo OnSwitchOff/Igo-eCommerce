@@ -8,6 +8,7 @@ import { OrderItem } from '../orders/entities/order-item.enity';
 import { Order } from '../orders/entities/order.entity';
 import { queryLogger } from './query-counter.logger';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import {FileRecord} from "../files/file-record.entity";
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       Currency,
       ProductPrice,
       User,
+      FileRecord
     ]),
   ],
 })
