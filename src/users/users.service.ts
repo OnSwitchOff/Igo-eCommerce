@@ -1,7 +1,7 @@
-import {Inject, Injectable, NotFoundException} from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { User } from './users.entity';
-import {getUserRepository, UsersRepository} from './users.repository';
-import { DataSource} from "typeorm";
+import { getUserRepository, UsersRepository } from './users.repository';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class UsersService {
@@ -12,7 +12,7 @@ export class UsersService {
   }
 
   async findAll() {
-    return  await this.usersRepository.findAllUsers();
+    return await this.usersRepository.findAllUsers();
   }
 
   async findById(id: string) {
@@ -23,7 +23,8 @@ export class UsersService {
 
   async findByEmail(email: string) {
     const user = await this.usersRepository.findByEmail(email);
-    if (!user) throw new NotFoundException(`User with email ${email} not found`);
+    if (!user)
+      throw new NotFoundException(`User with email ${email} not found`);
     return user;
   }
 
@@ -32,7 +33,10 @@ export class UsersService {
     if (!deleted) throw new NotFoundException(`User with id ${id} not found`);
   }
 
-  async updateUser(id: string, updateData: Partial<Pick<User, 'name' | 'age' | 'email'>>) {
+  async updateUser(
+    id: string,
+    updateData: Partial<Pick<User, 'name' | 'age' | 'email'>>,
+  ) {
     const user = await this.usersRepository.updateUser(id, updateData);
     if (!user) throw new NotFoundException(`User with id ${id} not found`);
     return user;

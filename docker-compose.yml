@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      NODE_ENV: docker
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  api:
+    build: .
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: docker
+    depends_on:
+      - db
+    command: >
+      sh -c "
+      echo 'Waiting for DB...';
+      until pg_isready -h db -p 5432 -U postgres; do sleep 1; done;
+      echo 'DB is ready, running seed...';
+      npm run seed;
+      echo 'Starting NestJS server...';
+      node dist/main.js
+      "
+
+volumes:
+  db-data:
