@@ -43,16 +43,22 @@ export class OrdersService {
       return existing;
     }
 
-    return this.dataSource.transaction(async (manager) => {
-      const ordersRepository = manager.getRepository(Order);
-      const itemsRepository = manager.getRepository(OrderItem);
-      const usersRepository = manager.getRepository(User);
-      const pricesRepository = manager.getRepository(ProductPrice);
-      const productsRepository = manager.getRepository(Product);
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const ordersRepository = queryRunner.manager.getRepository(Order);
+      const itemsRepository = queryRunner.manager.getRepository(OrderItem);
+      const usersRepository = queryRunner.manager.getRepository(User);
+      const pricesRepository = queryRunner.manager.getRepository(ProductPrice);
+      const productsRepository = queryRunner.manager.getRepository(Product);
 
       const user = await usersRepository.findOne({
         where: { id: validated.userId },
       });
+
       if (!user) {
         throw new NotFoundException('User not found');
       }
@@ -81,14 +87,16 @@ export class OrdersService {
       }
 
       if (order.items!.length > 0) {
+        await queryRunner.commitTransaction();
         return order;
       }
 
       const orderItems: Promise<QueryDeepPartialEntity<OrderItem>>[] =
         validated.items.map(async (item) => {
-          const product: Product | null = await productsRepository.findOne({
+          const product = await productsRepository.findOne({
             where: { id: item.productId.toString() },
           });
+
           if (!product) {
             throw new NotFoundException('product not found');
           }
@@ -101,10 +109,9 @@ export class OrdersService {
 
           await this.decrementStock(product, item.quantity, productsRepository);
 
-          const priceId = item.priceId.toString();
           const price = await pricesRepository.findOne({
             relations: ['currency'],
-            where: { id: priceId },
+            where: { id: item.priceId.toString() },
           });
 
           if (!price) {
@@ -136,9 +143,16 @@ export class OrdersService {
         throw new Error('Order creation failed');
       }
 
+      await queryRunner.commitTransaction();
+
       console.log(created);
       return created;
-    });
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   private async decrementStock(
