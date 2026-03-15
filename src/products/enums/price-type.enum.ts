@@ -1,5 +1,5 @@
 export enum PriceType {
-    SALE = "SALE",
-    SUPPLY = "SUPPLY",
-    OFFER = "OFFER",
+  SALE = 'SALE',
+  SUPPLY = 'SUPPLY',
+  OFFER = 'OFFER',
 }

@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      NODE_ENV: docker
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: docker
+    depends_on:
+      - db
+      - minio
+    command: >
+      sh -c "
+      echo 'Waiting for DB...';
+      until pg_isready -h db -p 5432 -U postgres; do sleep 1; done;
+      echo 'DB is ready, applying migrations...';
+      npm run migrations:apply;
+      echo 'DB is ready, running seed...';
+      npm run seed;
+      echo 'Starting NestJS server...';
+      node dist/main.js
+      "
+
+  minio:
+    image: minio/minio:latest
+    container_name: files-module-minio
+    restart: unless-stopped
+    environment:
+      NODE_ENV: docker
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY:-minioadmin}
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: files-module-minio-init
+    depends_on:
+      - minio
+    restart: 'no'
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 ${AWS_ACCESS_KEY_ID:-minioadmin} ${AWS_SECRET_ACCESS_KEY:-minioadmin}; do
+        echo 'waiting for minio...';
+        sleep 2;
+      done;
+      mc mb --ignore-existing local/${AWS_S3_BUCKET:-igo-ecommerce-private};
+      mc anonymous set none local/${AWS_S3_BUCKET:-igo-ecommerce-private};
+      echo 'minio bucket is ready';
+      "
+
+volumes:
+  db-data:
+  minio-data:
