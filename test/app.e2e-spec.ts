@@ -2,11 +2,11 @@ import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
 import request from 'supertest';
-import {AppModule} from "../src/app.module";
-import {seedDemoData} from "../src/seed/seed";
-import {User} from "../src/users/users.entity";
-import {Product} from "../src/products/entities/product.entity";
-import {Order} from "../src/orders/entities/order.entity";
+import { AppModule } from '../src/app.module';
+import { seedDemoData } from '../src/seed/seed';
+import { User } from '../src/users/users.entity';
+import { Product } from '../src/products/entities/product.entity';
+import { Order } from '../src/orders/entities/order.entity';
 import { v4 as uuidv4 } from 'uuid';
 
 describe('Orders Idempotency (e2e)', () => {
@@ -26,10 +26,14 @@ describe('Orders Idempotency (e2e)', () => {
     dataSource = app.get(DataSource);
     await seedDemoData(dataSource);
 
-    const user = await dataSource.getRepository(User).findOne({ where: { name: "Bob" } });
+    const user = await dataSource
+      .getRepository(User)
+      .findOne({ where: { name: 'Bob' } });
     userId = user!.id;
 
-    const product = await dataSource.getRepository(Product).findOne({ where: { name: "T-Shirt" }, relations: ['prices'] });
+    const product = await dataSource
+      .getRepository(Product)
+      .findOne({ where: { name: 'T-Shirt' }, relations: ['prices'] });
     productId = product!.id;
     priceId = product!.prices[0].id;
   });
@@ -42,27 +46,22 @@ describe('Orders Idempotency (e2e)', () => {
     const idempotencyKey = uuidv4();
 
     const payload = {
-      idempotencyKey:idempotencyKey,
+      idempotencyKey: idempotencyKey,
       userId: userId,
-      items:
-          [
-            {
-              productId: productId,
-              quantity: 1,
-              priceId: priceId
-            }
-          ]
+      items: [
+        {
+          productId: productId,
+          quantity: 1,
+          priceId: priceId,
+        },
+      ],
     };
 
     // 🔥 ДВА ПАРАЛЕЛЬНІ ЗАПИТИ
     const [res1, res2] = await Promise.all([
-      request(app.getHttpServer())
-          .post('/orders')
-          .send(payload),
+      request(app.getHttpServer()).post('/orders').send(payload),
 
-      request(app.getHttpServer())
-          .post('/orders')
-          .send(payload),
+      request(app.getHttpServer()).post('/orders').send(payload),
     ]);
 
     // ✅ жоден не впав

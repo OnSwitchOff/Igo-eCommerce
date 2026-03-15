@@ -1,8 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import type  { User } from './interfaces/users.interface';
-
+import type { User } from './interfaces/users.interface';
 
 //TODO:NEED TO FIX!!
 describe('UsersController', () => {
@@ -49,8 +48,9 @@ describe('UsersController', () => {
     });
 
     it('should throw NotFoundException if user does not exist', () => {
-      expect(() => usersController.getById('non-existing-id'))
-      .toThrow('User with ID non-existing-id not found');
+      expect(() => usersController.getById('non-existing-id')).toThrow(
+        'User with ID non-existing-id not found',
+      );
     });
   });
 });
