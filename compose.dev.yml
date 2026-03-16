@@ -44,7 +44,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: prod-distroless
+      target: dev
     restart: always
     ports:
       - "3001:3001"

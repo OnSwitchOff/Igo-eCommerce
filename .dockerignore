@@ -1,4 +1,34 @@
+# ======================
+# Node modules & logs
+# ======================
 node_modules
+npm-debug.log
+yarn-error.log
+pnpm-lock.yaml # якщо не потрібен у prod
 dist
+coverage
 .git
+
+# ======================
+# OS / IDE / Editor files
+# ======================
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+*.swp
+*.swo
+
+# ======================
+# Env files (якщо хочеш не копіювати у продакшен)
+# ======================
 .env
+.env.local
+.env.*.local
+
+# ======================
+# Misc
+# ======================
+*.log
+*.tmp
+*.bak
