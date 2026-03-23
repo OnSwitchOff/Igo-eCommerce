@@ -4,9 +4,12 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany,
+  OneToMany, OneToOne, ManyToOne, JoinColumn,
 } from 'typeorm';
 import { Order } from '../orders/entities/order.entity';
+import {OrderItem} from "../orders/entities/order-item.enity";
+import {FileRecord} from "../files/file-record.entity";
+import {Product} from "../products/entities/product.entity";
 
 @Entity('users')
 export class User {
@@ -53,4 +56,11 @@ export class User {
     default: () => 'ARRAY[]::text[]',
   })
   scopes: string[];
+
+  @Column({ type: 'uuid', name: 'avatar_file_id', nullable: true })
+  avatarFileId: string;
+
+  @OneToOne(() => FileRecord, { nullable: true })
+  @JoinColumn({ name: 'avatar_file_id' }) // ✅ correct FK column
+  avatarFile: FileRecord;
 }
