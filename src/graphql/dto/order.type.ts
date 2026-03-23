@@ -30,6 +30,6 @@ export class OrderType {
   @Field(() => UserType, { nullable: true })
   customer?: UserType;
 
-  @Field((type) => [OrderItemType], { nullable: 'itemsAndList' })
+  @Field((type) => [OrderItemType])
   items?: OrderItemType[];
 }

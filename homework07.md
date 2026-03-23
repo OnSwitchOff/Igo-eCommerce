@@ -22,12 +22,15 @@
 ![before optimization log](assets/gql/preBatchinglog.jpg)
 </details>
 
+
 <details>
 <summary>After optimization</summary>
 
 ![after optimization code](assets/gql/batching.jpg)
 ![after optimization log](assets/gql/batchinglog.jpg)
 </details>
+
+Отже до використання даталоадеру викновалось 14  SQL - запитів, а після лише 5
 
 **4 Приклад GraphQL-query для перевірки:**
 
