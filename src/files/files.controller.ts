@@ -5,6 +5,7 @@ import { CompleteUploadDto } from './dto/complete-upload.dto';
 import { PresignFileDto } from './dto/presign-file.dto';
 import { FilesService } from './files.service';
 import {JwtAuthGuard} from "../auth/jwt.guard";
+import {Scopes} from "../auth/scopes.decorator";
 
 @UseGuards(JwtAuthGuard)
 @Controller('files')
@@ -12,6 +13,7 @@ export class FilesController {
     constructor(private readonly filesService: FilesService) {}
 
     @Post('presign')
+    @Scopes('files:write')
     async presign(
         @Req() req: Request & { user?: AuthUser },
         @Body() body: PresignFileDto
@@ -20,6 +22,7 @@ export class FilesController {
     }
 
     @Post('complete')
+    @Scopes('files:write')
     async complete(
         @Req() req: Request & { user?: AuthUser },
         @Body() body: CompleteUploadDto

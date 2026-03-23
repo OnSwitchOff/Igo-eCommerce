@@ -32,7 +32,7 @@ export class OrdersGqlService {
 
     const qb = this.ordersRepository
       .createQueryBuilder('orders')
-      .orderBy('orders.createdAt', 'DESC')
+      .orderBy('orders.created_at', 'DESC')
       .addOrderBy('orders.id', 'ASC')
       .take(limit + 1);
 
@@ -41,17 +41,17 @@ export class OrdersGqlService {
     }
 
     if (from) {
-      qb.andWhere('orders.createdAt >= :from', { from: from });
+      qb.andWhere('orders.created_at >= :from', { from: from });
     }
 
     if (to) {
-      qb.andWhere('orders.createdAt <= :to', { to: to });
+      qb.andWhere('orders.created_at <= :to', { to: to });
     }
 
     if (lastId) {
       qb.andWhere(
-        `(orders.createdAt, orders.id) > (
-                SELECT o."createdAt", o.id
+        `(orders.created_at, orders.id) > (
+                SELECT o."created_at", o.id
                 FROM orders o
                 WHERE o.id = :lastId)`,
         { lastId },

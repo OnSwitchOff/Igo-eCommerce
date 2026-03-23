@@ -6,11 +6,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
-import { Repository } from 'typeorm';
+import {DataSource, Repository} from 'typeorm';
 import { AuthUser } from '../auth/types';
 import { FileRecord, FileStatus } from './file-record.entity';
 import { PresignFileDto } from './dto/presign-file.dto';
 import { S3Service } from './s3.service';
+import {User} from "../users/users.entity";
 
 const ALLOWED_CONTENT_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 const EXTENSION_BY_TYPE: Record<string, string> = {
@@ -24,6 +25,7 @@ export class FilesService {
     private readonly maxImageBytes = 5 * 1024 * 1024;
 
     constructor(
+        private readonly dataSource: DataSource,
         @InjectRepository(FileRecord)
         private readonly filesRepository: Repository<FileRecord>,
         private readonly s3Service: S3Service
@@ -70,23 +72,52 @@ export class FilesService {
     }
 
     async completeUpload(fileId: string, user: AuthUser) {
-        const file = await this.findByIdOrThrow(fileId);
-        this.assertOwnerOrStaff(file, user);
+        const queryRunner = this.dataSource.createQueryRunner();
 
-        if (file.status === FileStatus.READY) {
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+
+        try {
+            const fileRepo = queryRunner.manager.getRepository(FileRecord);
+            const userRepo = queryRunner.manager.getRepository(User);
+
+            const file = await fileRepo.findOneByOrFail({ id: fileId });
+
+            this.assertCanAccessFile(file, user);
+
+            if (file.status === FileStatus.READY) {
+                await queryRunner.commitTransaction();
+                return this.toPublicView(file);
+            }
+
+            const exists = await this.s3Service.objectExists(file.objectKey);
+            if (!exists) {
+                throw new BadRequestException('File object is missing in storage');
+            }
+
+            // ✅ update file
+            file.status = FileStatus.READY;
+            file.completedAt = new Date();
+            file.visibility = true;
+
+            await fileRepo.save(file);
+
+            // ✅ attach to user
+            const dbUser = await userRepo.findOneByOrFail({ id: user.userId });
+
+            dbUser.avatarFileId = file.id;
+
+            await userRepo.save(dbUser);
+
+            await queryRunner.commitTransaction();
+
             return this.toPublicView(file);
+        } catch (error) {
+            await queryRunner.rollbackTransaction();
+            throw error;
+        } finally {
+            await queryRunner.release();
         }
-
-        const exists = await this.s3Service.objectExists(file.objectKey);
-        if (!exists) {
-            throw new BadRequestException('File object is missing in storage');
-        }
-
-        file.status = FileStatus.READY;
-        file.completedAt = new Date();
-        const saved = await this.filesRepository.save(file);
-
-        return this.toPublicView(saved);
     }
 
     async getFileById(fileId: string, user: AuthUser) {
@@ -169,6 +200,18 @@ export class FilesService {
         const isStaff = user.roles.includes('admin') || user.roles.includes('support');
 
         if (!isOwner && !isStaff) {
+            throw new ForbiddenException('Access denied');
+        }
+    }
+    private assertCanAccessFile(file: FileRecord, user: AuthUser) {
+        const isOwner = file.ownerUserId === user.userId;
+        const isAdmin = user.roles.includes('admin');
+
+        const isSupportWithScope =
+            user.roles?.includes('support') &&
+            user.scopes?.includes('files:read:all');
+
+        if (!isOwner && !isAdmin && !isSupportWithScope) {
             throw new ForbiddenException('Access denied');
         }
     }

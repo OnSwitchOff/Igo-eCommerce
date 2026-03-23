@@ -57,4 +57,10 @@ export class FileRecord {
 
     @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
     updatedAt: Date;
+
+    @Column(({ type: 'boolean' }))
+    visibility: boolean;
+
+    @Column({ type: 'uuid', name: 'entity_id' })
+    entityId : string;
 }

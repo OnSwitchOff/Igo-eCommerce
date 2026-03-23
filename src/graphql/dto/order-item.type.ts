@@ -15,6 +15,6 @@ export class OrderItemType {
   @Field((type) => String)
   priceAtPurchase: string;
 
-  @Field((type) => ProductType, { nullable: true })
+  @Field((type) => ProductType)
   product?: ProductType;
 }
